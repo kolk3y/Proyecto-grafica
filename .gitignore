@@ -1,0 +1,29 @@
+# Resultados de experimentos (pueden ser cientos de MB)
+voxel_results/
+mesh_results/
+
+# Caché de Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Imágenes crudas (sin procesar) - pesadas y no reproducibles aquí
+data/custom_silhouettes/raw/
+
+# Archivos de modelos 3D pesados generados
+*.obj
+*.npy
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Entornos virtuales
+.venv/
+env/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
