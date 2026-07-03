@@ -84,23 +84,27 @@ def binarize_image(img_path: str) -> np.ndarray:
 
 def compute_complexity(mask: np.ndarray) -> dict:
     """Calcula métricas de complejidad geométrica para el análisis."""
-    binary = (mask > 127).astype(np.uint8)
+    binary = (mask > 127).astype(np.uint8) * 255
 
-    area = binary.sum()
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    area = (binary > 0).sum()
+    contours, hierarchy = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
     perimeter = sum(cv2.arcLength(c, True) for c in contours)
 
     # Compacidad: 4π·área / perímetro² (1 = círculo perfecto, < 1 = más complejo)
     compactness = (4 * np.pi * area) / (perimeter ** 2) if perimeter > 0 else 0
 
     # Componentes conexas (huecos y partes separadas)
-    _, labels = cv2.connectedComponents(binary)
+    _, labels = cv2.connectedComponents((binary > 0).astype(np.uint8))
     n_components = labels.max()
 
     # Relación de aspecto
     if contours:
-        x, y, w, h = cv2.boundingRect(max(contours, key=cv2.contourArea))
-        aspect_ratio = max(w, h) / max(min(w, h), 1)
+        ext_contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        if ext_contours:
+            x, y, w, h = cv2.boundingRect(max(ext_contours, key=cv2.contourArea))
+            aspect_ratio = max(w, h) / max(min(w, h), 1)
+        else:
+            aspect_ratio = 1.0
     else:
         aspect_ratio = 1.0
 
