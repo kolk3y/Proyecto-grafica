@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git fetch *)",
+      "Bash(python3 -c ' *)",
+      "Bash(git pull *)",
+      "Bash(jupyter nbconvert *)",
+      "Bash(conda run *)",
+      "Bash(~/miniconda3/envs/shadowart/bin/python -c \"import pandas\")",
+      "Bash(~/miniconda3/envs/shadowart/bin/pip install *)",
+      "Bash(~/miniconda3/envs/shadowart/bin/python -c \"import pandas; print\\(pandas.__version__\\)\")"
+    ]
+  }
+}

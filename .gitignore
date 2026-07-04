@@ -1,6 +1,9 @@
 # Resultados de experimentos (pueden ser cientos de MB)
-voxel_results/
-mesh_results/
+# pero se permiten los .csv de métricas en la raíz de cada carpeta
+voxel_results/*
+mesh_results/*
+!voxel_results/*.csv
+!mesh_results/*.csv
 
 # Caché de Python
 __pycache__/

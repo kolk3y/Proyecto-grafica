@@ -28,7 +28,8 @@ Proyecto-grafica/
 │       └── generate_simple.py # Genera las 5 siluetas simples programáticamente
 │
 ├── voxel/                     # Pipeline de optimización voxel
-│   ├── val.py                 # Script principal
+│   ├── val.py                 # Script principal (línea de comandos)
+│   ├── Voxel_method.ipynb     # Notebook con automatización de experimentos y métricas
 │   ├── models.py              # VolumeModel
 │   ├── datasets.py            # Carga de datos
 │   ├── losses.py              # Funciones de pérdida
@@ -119,17 +120,29 @@ superman.png    teddy2.png      victory.png     armadillo_0.png yo.png
 
 ### Dataset propio
 
-15 siluetas en `data/custom_silhouettes/processed/`, clasificadas en tres niveles de complejidad geométrica medida por **compacidad** (4π·área/perímetro², donde 1.0 = círculo perfecto):
+15 siluetas en `data/custom_silhouettes/processed/`, clasificadas por complejidad geométrica medida con **compacidad** (4π·área/perímetro², donde 1.0 = círculo perfecto):
 
-| Nivel | Siluetas | Compacidad aprox. |
+| Nivel | Archivo | Compacidad |
 |---|---|---|
-| Simple | s1_circulo, s2_rectangulo, s3_estrella, s4_flecha, s5_cruz | 0.26 – 0.90 |
-| Media | fish, bird, house, tree, sitting_cat | 0.21 – 0.79 |
-| Alta | running_person, guitar, butterfly, bike, snowflake | 0.08 – 0.22 |
+| Simple | s1_circulo.png | 0.90 |
+| Simple | s2_rectangulo.png | 0.76 |
+| Simple | s3_cruz.png | 0.51 |
+| Simple | s4_flecha.png | 0.48 |
+| Simple | s5_house.png | 0.46 |
+| Media | m1_bird.png | 0.41 |
+| Media | m2_tree.png | 0.36 |
+| Media | m3_fish.png | 0.79 |
+| Media | m4_star.png | 0.26 |
+| Media | m5_guitar.png | 0.23 |
+| Alta | h1_sitting_cat.png | 0.21 |
+| Alta | h2_running_person.png | 0.22 |
+| Alta | h3_snowflake.png | 0.08 |
+| Alta | h4_butterfly.png | 0.19 |
+| Alta | h5_bike.png | 0.09 |
 
 #### Proceso de binarización
 
-Las 5 siluetas simples se generaron programáticamente con OpenCV. Las 10 restantes se obtuvieron de [openclipart.org](https://openclipart.org) (licencia CC0) y se procesaron con `data/custom_silhouettes/binarize.py`:
+Las 5 siluetas simples se generaron programáticamente con OpenCV (`generate_simple.py`). Las 10 restantes se obtuvieron de [openclipart.org](https://openclipart.org) (licencia CC0) y se procesaron con `binarize.py`:
 
 1. Extracción de máscara por canal alfa (si disponible) o umbralización de Otsu sobre escala de grises
 2. Inversión automática para imágenes con figura oscura sobre fondo claro
@@ -148,118 +161,82 @@ conda run -n shadowart python binarize.py          # procesa las 10 restantes
 
 ## Correr los pipelines
 
-Todos los comandos se ejecutan desde la carpeta del pipeline correspondiente.
+**Importante:** todos los experimentos usan `mirror_mode=0` (desactivado) para que los resultados sean comparables entre voxel y mesh.
 
 ### Pipeline Voxel
 
-Optimiza una cuadrícula de vóxeles 128³ mediante ray marching diferenciable.
+Ver `voxel/Voxel_method.ipynb` para la versión automatizada con todos los experimentos.
 
 ```bash
 cd voxel/
 conda run --no-capture-output -n shadowart python val.py \
-    cuda:0 \          # dispositivo
-    <exp_id> \        # nombre del experimento (carpeta en voxel_results/)
-    600 \             # iteraciones
-    0.01 \            # learning rate
-    -swt 10.0 \       # peso pérdida silueta
-    -l1wt 10.0 \      # peso pérdida L1
-    -sdlist <img1.png> <img2.png> ...   # siluetas objetivo (rutas relativas a voxel/)
-```
-
-**Ejemplo con dataset original:**
-```bash
-cd voxel/
-conda run --no-capture-output -n shadowart python val.py cuda:0 duck_mikey 600 0.01 -swt 10.0 -l1wt 10.0 -sdlist duck.png mikey.png
-```
-
-**Tiempo estimado:** ~9 min con 2 vistas en GTX 1080.  
-**Output:** `voxel_results/<exp_id>/` con `.obj`, `.npy`, `.gif` y `log.txt` con métricas.
-
-### Pipeline Mesh
-
-Optimiza los vértices de una esfera ico deformada mediante rasterización diferenciable.
-
-```bash
-cd mesh/
-conda run --no-capture-output -n shadowart python val.py \
-    cuda:0 \          # dispositivo
-    <exp_id> \        # nombre del experimento (carpeta en mesh_results/)
-    2000 \            # iteraciones
-    0.15 \            # learning rate
-    0 \               # model_id (siempre 0)
-    -swt 1.6 \        # peso pérdida silueta
-    -l1wt 1.6 \       # peso pérdida L1
-    -mwt 0.0 \        # peso MS-SSIM
-    -ewt 1.6 \        # peso pérdida de aristas
-    -nwt 0.6 \        # peso pérdida de normales
-    -lwt 1.2 \        # peso suavizado laplaciano
+    cuda:0 <exp_id> 600 0.01 \
+    -mr 0 -swt 10.0 -l1wt 10.0 \
     -sdlist <img1.png> <img2.png> ...
 ```
 
-**Ejemplo con dataset original:**
+**Tiempo estimado:** ~9 min con 2 vistas en GTX 1080.
+**Output:** `voxel_results/<exp_id>/` con `.obj`, `.npy`, `.gif` y `log.txt`.
+
+### Pipeline Mesh
+
 ```bash
 cd mesh/
-conda run --no-capture-output -n shadowart python val.py cuda:0 duck_mikey 2000 0.15 0 -swt 1.6 -l1wt 1.6 -mwt 0.0 -ewt 1.6 -nwt 0.6 -lwt 1.2 -sdlist duck.png mikey.png
+conda run --no-capture-output -n shadowart python val.py \
+    cuda:0 <exp_id> 2000 0.15 0 \
+    -mr 0 -swt 1.6 -l1wt 1.6 -mwt 0.0 -ewt 1.6 -nwt 0.6 -lwt 1.2 \
+    -sdlist <img1.png> <img2.png> ...
 ```
 
-**Tiempo estimado:** ~11 min con 2 vistas en GTX 1080.  
-**Output:** `mesh_results/<exp_id>/` con `.obj`, `.gif` y `log.txt` con métricas.
+**Tiempo estimado:** ~11 min con 2 vistas en GTX 1080.
+**Output:** `mesh_results/<exp_id>/` con `.obj`, `.gif` y `log.txt`.
 
-> **Importante:** las siluetas se pasan con ruta relativa al directorio donde se corre el script. Para usar imágenes de otro directorio, usar rutas absolutas:
-> ```bash
-> -sdlist /ruta/absoluta/a/img1.png /ruta/absoluta/a/img2.png
-> ```
+> Las siluetas se pasan con ruta relativa al directorio donde se corre el script.
+> Para siluetas propias usar ruta absoluta, por ejemplo:
+> `/mnt/c/Users/.../data/custom_silhouettes/processed/s1_circulo.png`
 
 ---
 
 ## Plan de experimentos
 
-### Experimento A — Replicación baseline (dataset original)
+Todos los experimentos se corren en **ambos pipelines** (voxel y mesh) para habilitar comparación directa.
 
-Verificar que el método reproduce los resultados del paper con la configuración por defecto.
+### Experimentos con dataset propio (siluetas propias)
 
-| Corrida | Siluetas | Pipeline | Iter |
-|---|---|---|---|
-| A-V1 | duck + mikey | Voxel | 600 |
-| A-V2 | batman + heart | Voxel | 600 |
-| A-V3 | bunny_0 + superman | Voxel | 600 |
-| A-M1 | duck + mikey | Mesh | 2000 |
-| A-M2 | batman + heart | Mesh | 2000 |
-| A-M3 | bunny_0 + superman | Mesh | 2000 |
+| Exp ID | Vistas | Siluetas |
+|---|---|---|
+| 2-simple-simple | 2 | s1_circulo, s3_cruz |
+| 2-simple-alta | 2 | s2_rectangulo, h2_running_person |
+| 2-alta-alta | 2 | h3_snowflake, h5_bike |
+| 5-simple | 5 | s1_circulo, s2_rectangulo, s3_cruz, s4_flecha, s5_house |
+| 5-media | 5 | m1_bird, m2_tree, m3_fish, m4_star, m5_guitar |
+| 5-alta | 5 | h1_sitting_cat, h2_running_person, h3_snowflake, h4_butterfly, h5_bike |
+| 5-2simple-2media-1alta | 5 | s1_circulo, s5_house, m1_bird, m5_guitar, h3_snowflake |
+| 10-5simple-5media | 10 | s1–s5 + m1–m5 |
+| 10-5media-5alta | 10 | m1–m5 + h1–h5 |
 
-### Experimento B — Variación por cantidad de fotos
+### Experimentos baseline (dataset original del paper)
 
-Mismo conjunto de siluetas base, variando el número de vistas N ∈ {2, 5, 10}.
-
-| Corrida | Vistas | Siluetas | Pipeline |
-|---|---|---|---|
-| B-V-2 | 2 | duck, mikey | Voxel |
-| B-V-5 | 5 | duck, mikey, batman, heart, like | Voxel |
-| B-V-10 | 10 | duck, mikey, batman, heart, like, superman, bunny_0, teddy2, puma, hand | Voxel |
-| B-M-2 | 2 | duck, mikey | Mesh |
-| B-M-5 | 5 | duck, mikey, batman, heart, like | Mesh |
-| B-M-10 | 10 | duck, mikey, batman, heart, like, superman, bunny_0, teddy2, puma, hand | Mesh |
-
-### Experimento C — Siluetas propias por complejidad
-
-Evaluar generalización del método fuera del dataset original.
-
-| Corrida | Complejidad | Ejemplo de siluetas | Pipeline |
-|---|---|---|---|
-| C-simple | Baja | s1_circulo + s3_estrella | Ambos |
-| C-media | Media | fish + sitting_cat | Ambos |
-| C-alta | Alta | bike + snowflake | Ambos |
+| Exp ID | Vistas | Siluetas |
+|---|---|---|
+| 2-mikey-puma | 2 | mikey, puma |
+| 3-heroes | 3 | Spider-Man, superman, batman |
+| 3-bunny-teddy-duck | 3 | bunny_0, teddy2, duck |
+| 3-mikey-puma-heart | 3 | mikey, puma, heart |
 
 ---
 
 ## Métricas
 
-Cada corrida genera un `log.txt` con:
+Cada experimento produce en `log.txt`:
 
 | Métrica | Descripción |
 |---|---|
 | **IoU** | Intersection over Union entre sombra predicha y silueta objetivo |
-| **Dice** | Coeficiente Dice (similar a IoU, más sensible a regiones pequeñas) |
+| **Dice** | Coeficiente Dice |
+| **Precision** | TP / (TP + FP) |
+| **Recall** | TP / (TP + FN) |
+| **ROI Pixel Accuracy** | Pixel accuracy sobre el bounding box unión |
 | **MS-SSIM** | Multi-Scale Structural Similarity |
 | **Edge loss** | Regularización de aristas (solo mesh) |
 | **Laplacian loss** | Suavidad de la superficie (solo mesh) |
@@ -269,7 +246,7 @@ Cada corrida genera un `log.txt` con:
 
 ## Preguntas de investigación
 
-1. ¿Qué características geométricas de una silueta (compacidad, huecos, aspect ratio) correlacionan con el IoU final?
-2. ¿Existe un punto de saturación al agregar más vistas? ¿O más siempre es mejor?
+1. ¿Qué características geométricas (compacidad, huecos, aspect ratio) correlacionan con el IoU final?
+2. ¿Existe un punto de saturación al agregar más vistas, o más siempre es mejor?
 3. ¿El modo óptimo (voxel vs. mesh) depende de la complejidad de la silueta?
 4. ¿Hay correlación entre IoU y reconocimiento humano de las sombras?
