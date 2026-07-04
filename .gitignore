@@ -27,3 +27,7 @@ env/
 # Windows
 Thumbs.db
 desktop.ini
+
+# CUB
+1.10.0.tar.gz
+cub-1.10.0/
