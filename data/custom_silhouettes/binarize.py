@@ -32,14 +32,22 @@ def binarize_image(img_path: str) -> np.ndarray:
 
     # --- Paso 1: obtener máscara binaria ---
     if img_bgr.ndim == 3 and img_bgr.shape[2] == 4:
-        # PNG con canal alpha: usar alfa directamente
         alpha = img_bgr[:, :, 3]
-        _, mask = cv2.threshold(alpha, 10, 255, cv2.THRESH_BINARY)
+        # VERIFICACIÓN: ¿Realmente hay transparencia en esta imagen?
+        if alpha.min() < 255: 
+            # Sí, hay píxeles transparentes. Confiamos en el alfa.
+            _, mask = cv2.threshold(alpha, 10, 255, cv2.THRESH_BINARY)
+        else:
+            # Es un PNG engañoso: tiene canal alfa pero es 100% opaco.
+            # Ignoramos el alfa y usamos los canales de color (BGR).
+            gray = cv2.cvtColor(img_bgr[:, :, :3], cv2.COLOR_BGR2GRAY)
+            _, mask = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            if np.mean(mask) > 127:
+                mask = cv2.bitwise_not(mask)
     else:
-        # Sin alfa: convertir a gris y aplicar OTSU
+        # Sin alfa (JPG, BMP, o PNG de 24 bits): convertir a gris y aplicar OTSU
         gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY) if img_bgr.ndim == 3 else img_bgr
         _, mask = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        # Si la figura es oscura sobre fondo claro, invertir
         if np.mean(mask) > 127:
             mask = cv2.bitwise_not(mask)
 
@@ -118,11 +126,12 @@ def compute_complexity(mask: np.ndarray) -> dict:
 
 def process_file(src_path: str, out_dir: str) -> None:
     name = Path(src_path).stem + ".png"
-    out_path = os.path.join(out_dir, name)
 
     try:
         result = binarize_image(src_path)
-        cv2.imwrite(out_path, result)
+        if out_dir != "":
+            out_path = os.path.join(out_dir, name)
+            cv2.imwrite(out_path, result)
         metrics = compute_complexity(result)
         print(f"  OK  {name:30s} area={metrics['area_pct']:5.1f}%  "
               f"compactness={metrics['compactness']:.4f}  "
@@ -134,9 +143,13 @@ def process_file(src_path: str, out_dir: str) -> None:
 
 def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    raw_dir = os.path.join(script_dir, "raw")
-    out_dir = os.path.join(script_dir, "processed")
-    os.makedirs(out_dir, exist_ok=True)
+    #raw_dir = os.path.join(script_dir, "raw") # Preprocesar imagenes para binarizarlas y ajustar su tamaño a 512x512
+    #raw_dir = "data/viewsdataset" # Evaluar compacidad de las imagenes del dataset
+    raw_dir = "data/custom_silhouettes/processed" # Evaluar compacidad de las imagenes nuevas
+    # out_dir = os.path.join(script_dir, "processed") # Dejar como out_dir = "" para obtener solo las metricas
+    out_dir = ""
+    if out_dir != "":
+        os.makedirs(out_dir, exist_ok=True)
 
     if len(sys.argv) > 1:
         # Procesar archivos específicos
@@ -156,10 +169,6 @@ def main():
     print(f"\nProcesando {len(files)} imagen(es)...\n")
     for f in files:
         process_file(f, out_dir)
-
-    print(f"\nListo. Siluetas guardadas en: {out_dir}/")
-    print("\nNota: revisa las imágenes visualmente antes de usarlas.")
-
 
 if __name__ == "__main__":
     main()
