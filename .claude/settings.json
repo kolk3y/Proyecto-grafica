@@ -10,7 +10,15 @@
       "Bash(conda run *)",
       "Bash(~/miniconda3/envs/shadowart/bin/python -c \"import pandas\")",
       "Bash(~/miniconda3/envs/shadowart/bin/pip install *)",
-      "Bash(~/miniconda3/envs/shadowart/bin/python -c \"import pandas; print\\(pandas.__version__\\)\")"
+      "Bash(~/miniconda3/envs/shadowart/bin/python -c \"import pandas; print\\(pandas.__version__\\)\")",
+      "Bash(git ls-tree *)",
+      "Bash(jupyter kernelspec *)",
+      "Bash(~/miniconda3/envs/shadowart/bin/python -c ' *)",
+      "Bash(~/miniconda3/envs/shadowart/bin/python -c \"import torch; print\\('CUDA disponible:', torch.cuda.is_available\\(\\)\\)\")",
+      "Read(//proc/12385/**)",
+      "Bash(top -bn1 -p 12385)",
+      "Bash(kill -9 12385)",
+      "Bash(nvidia-smi --query-gpu=memory.used --format=csv)"
     ]
   }
 }
