@@ -1,0 +1,11 @@
+The command line input string 
+['/usr/local/lib/python3.12/dist-packages/colab_kernel_launcher.py', '-f', '/root/.local/share/jupyter/runtime/kernel-ca255ade-ff92-4bac-a461-58a3958c88dd.json']
+
+Optimization Loss 
+[0.5880557894706726]
+Edge loss : 0.0050562648102641106
+Laplacian loss : 0.0170624777674675
+Normal loss : 0.06894135475158691
+IOU : 0.009950674246311804
+Dice : 0.01979170348491842
+MISSIM : 0.50077494079868

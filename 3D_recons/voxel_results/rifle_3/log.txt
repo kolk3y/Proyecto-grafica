@@ -1,0 +1,8 @@
+The command line input string 
+['/home/viceret/GRAFICA/Proyecto-grafica/.venv/lib/python3.8/site-packages/ipykernel_launcher.py', '--f=/run/user/1000/jupyter/runtime/kernel-v39f9f2b631feaa5c3390bca2d3d6cd7430e3681f3.json']
+Edge loss : 0.00033189449459314346
+Laplacian loss : 0.0074929483234882355
+Normal loss : 0.41702717542648315
+IOU metric: 0.015545840753205949
+Dice metric: 0.030937145164026403
+MISSIM metric: 0.5004128578181068
