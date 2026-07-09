@@ -251,27 +251,3 @@ Prueban combinaciones de complejidad no vistas en el resto del plan (mismos nomb
 
 ---
 
-## Métricas
-
-Cada experimento produce en `log.txt`:
-
-| Métrica | Descripción |
-|---|---|
-| **IoU** | Intersection over Union entre sombra predicha y silueta objetivo |
-| **Dice** | Coeficiente Dice |
-| **Precision** | TP / (TP + FP) |
-| **Recall** | TP / (TP + FN) |
-| **ROI Pixel Accuracy** | Pixel accuracy sobre el bounding box unión |
-| **MS-SSIM** | Multi-Scale Structural Similarity |
-| **Edge loss** | Regularización de aristas (solo mesh) |
-| **Laplacian loss** | Suavidad de la superficie (solo mesh) |
-| **Normal loss** | Consistencia de normales (solo mesh) |
-
----
-
-## Preguntas de investigación
-
-1. ¿Qué características geométricas (compacidad, huecos, aspect ratio) correlacionan con el IoU final?
-2. ¿Existe un punto de saturación al agregar más vistas, o más siempre es mejor?
-3. ¿El modo óptimo (voxel vs. mesh) depende de la complejidad de la silueta?
-4. ¿Hay correlación entre IoU y reconocimiento humano de las sombras?
