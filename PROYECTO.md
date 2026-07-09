@@ -36,14 +36,15 @@ Proyecto-grafica/
 │   └── utills.py              # Renderers y utilidades
 │
 ├── mesh/                      # Pipeline de optimización mesh
-│   ├── val.py                 # Script principal
+│   ├── val.py                 # Script principal (línea de comandos)
+│   ├── Mesh_method.ipynb      # Notebook con automatización de experimentos, métricas y visualización
 │   ├── datasets.py            # Carga de datos
 │   ├── losses.py              # Funciones de pérdida
 │   └── utills.py              # Renderers y utilidades
 │
 ├── media/                     # GIFs y figuras del paper original
-├── voxel_results/             # Outputs del pipeline voxel (ignorado por git)
-├── mesh_results/              # Outputs del pipeline mesh (ignorado por git)
+├── voxel_results/             # Outputs del pipeline voxel (subcarpetas por experimento ignoradas por git; los .csv de métricas sí se versionan)
+├── mesh_results/              # Outputs del pipeline mesh (subcarpetas por experimento ignoradas por git; los .csv de métricas sí se versionan)
 │
 ├── PROYECTO.md                # Este archivo
 ├── README.md                  # README original del repositorio
@@ -124,21 +125,23 @@ superman.png    teddy2.png      victory.png     armadillo_0.png yo.png
 
 | Nivel | Archivo | Compacidad |
 |---|---|---|
-| Simple | s1_circulo.png | 0.90 |
+| Simple | s1_circulo.png | 0.91 |
 | Simple | s2_rectangulo.png | 0.76 |
 | Simple | s3_cruz.png | 0.51 |
-| Simple | s4_flecha.png | 0.48 |
-| Simple | s5_house.png | 0.46 |
-| Media | m1_bird.png | 0.41 |
-| Media | m2_tree.png | 0.36 |
-| Media | m3_fish.png | 0.79 |
-| Media | m4_star.png | 0.26 |
-| Media | m5_guitar.png | 0.23 |
-| Alta | h1_sitting_cat.png | 0.21 |
-| Alta | h2_running_person.png | 0.22 |
-| Alta | h3_snowflake.png | 0.08 |
-| Alta | h4_butterfly.png | 0.19 |
-| Alta | h5_bike.png | 0.09 |
+| Simple | s4_flecha.png | 0.49 |
+| Simple | s5_house.png | 0.48 |
+| Media | m1_bird.png | 0.42 |
+| Media | m2_tree.png | 0.39 |
+| Media | m3_fish.png | 0.34 |
+| Media | m4_star.png | 0.28 |
+| Media | m5_guitar.png | 0.24 |
+| Alta | h1_sitting_cat.png | 0.22 |
+| Alta | h2_running_person.png | 0.20 |
+| Alta | h3_butterfly.png | 0.11 |
+| Alta | h4_snowflake.png | 0.08 |
+| Alta | h5_bike.png | 0.02 |
+
+> Valores recalculados tras el fix de `binarize.py` (commit `4f804d1`), que corrigió la binarización de PNGs con canal alfa engañoso (100% opaco). Esto reclasificó `h3`/`h4`: la mariposa (antes `h4_butterfly`) pasó a `h3_butterfly` y el copo de nieve (antes `h3_snowflake`) pasó a `h4_snowflake`, ya que la nueva medición da mayor compacidad a la mariposa.
 
 #### Proceso de binarización
 
@@ -180,6 +183,8 @@ conda run --no-capture-output -n shadowart python val.py \
 
 ### Pipeline Mesh
 
+Ver `mesh/Mesh_method.ipynb` para la versión automatizada con todos los experimentos (kernel `shadowart`). También existe `val.py` para correr un experimento suelto por línea de comandos:
+
 ```bash
 cd mesh/
 conda run --no-capture-output -n shadowart python val.py \
@@ -188,12 +193,21 @@ conda run --no-capture-output -n shadowart python val.py \
     -sdlist <img1.png> <img2.png> ...
 ```
 
-**Tiempo estimado:** ~11 min con 2 vistas en GTX 1080.
-**Output:** `mesh_results/<exp_id>/` con `.obj`, `.gif` y `log.txt`.
+**Tiempo estimado:** ~4-4.5 min por vista con `NITER=2000` en GTX 1080 (ej. un experimento de 3 vistas tarda ~12-13 min).
+**Output:** `mesh_results/<exp_id>/` con `.obj`, `.gif`, `log.txt` y las siluetas GT/predicción por vista (`sample_0view_N.png`, `sample_0_pred_view_N.png`).
 
 > Las siluetas se pasan con ruta relativa al directorio donde se corre el script.
 > Para siluetas propias usar ruta absoluta, por ejemplo:
 > `/mnt/c/Users/.../data/custom_silhouettes/processed/s1_circulo.png`
+
+### Métricas y visualización (notebooks)
+
+Ambos notebooks (`voxel/Voxel_method.ipynb`, `mesh/Mesh_method.ipynb`) calculan IoU, Dice, Precision, Recall y ROI Pixel Accuracy por vista a partir de las imágenes ya guardadas (no requieren reentrenar) y exportan un CSV consolidado con las columnas `experimento, view, IoU, Dice, Precision, Recall, ROI_PA` (`view` = nombre de la silueta, no índice):
+
+- `voxel_results/metricas_voxel.csv`
+- `mesh_results/metricas_consolidadas.csv` (experimentos base) y `mesh_results/metricas_espejo_paper.csv` (experimentos espejo)
+
+`Mesh_method.ipynb` incluye además `visualize_silhouettes(exp_id)`, que genera una figura por experimento con tres filas (Silueta original / Sombra obtenida / Diferencia) y una columna por vista, con el Recall de cada una — mismo formato usado en las figuras de Voxel.
 
 ---
 
@@ -207,11 +221,11 @@ Todos los experimentos se corren en **ambos pipelines** (voxel y mesh) para habi
 |---|---|---|
 | 2-simple-simple | 2 | s1_circulo, s3_cruz |
 | 2-simple-alta | 2 | s2_rectangulo, h2_running_person |
-| 2-alta-alta | 2 | h3_snowflake, h5_bike |
+| 2-alta-alta | 2 | h4_snowflake, h5_bike |
 | 5-simple | 5 | s1_circulo, s2_rectangulo, s3_cruz, s4_flecha, s5_house |
 | 5-media | 5 | m1_bird, m2_tree, m3_fish, m4_star, m5_guitar |
-| 5-alta | 5 | h1_sitting_cat, h2_running_person, h3_snowflake, h4_butterfly, h5_bike |
-| 5-2simple-2media-1alta | 5 | s1_circulo, s5_house, m1_bird, m5_guitar, h3_snowflake |
+| 5-alta | 5 | h1_sitting_cat, h2_running_person, h4_snowflake, h3_butterfly, h5_bike |
+| 5-2simple-2media-1alta | 5 | s1_circulo, s5_house, m1_bird, m5_guitar, h4_snowflake |
 | 10-5simple-5media | 10 | s1–s5 + m1–m5 |
 | 10-5media-5alta | 10 | m1–m5 + h1–h5 |
 
@@ -223,6 +237,17 @@ Todos los experimentos se corren en **ambos pipelines** (voxel y mesh) para habi
 | 3-heroes | 3 | Spider-Man, superman, batman |
 | 3-bunny-teddy-duck | 3 | bunny_0, teddy2, duck |
 | 3-mikey-puma-heart | 3 | mikey, puma, heart |
+
+### Experimentos espejo de generalización
+
+Prueban combinaciones de complejidad no vistas en el resto del plan (mismos nombres/imágenes en ambos pipelines).
+
+| Exp ID | Vistas | Siluetas |
+|---|---|---|
+| 2a-media-alta | 2 | m1_bird, h2_running_person |
+| 3b-1media-2alta | 3 | m5_guitar, h1_sitting_cat, h3_butterfly |
+| 3c-2simple-1media | 3 | s5_house, s4_flecha, m3_fish |
+| 3d-simple-media-alta | 3 | s2_rectangulo, m1_bird, h2_running_person |
 
 ---
 
